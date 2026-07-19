@@ -16,7 +16,8 @@ import json
 
 from datasets import load_dataset
 
-from typographic.config import BENCHMARK_DATASET, DATASETS_DIR, HF_DATASET_SOURCES, TRAINING_DATASETS
+from typographic.config import BENCHMARK_DATASET, DATASETS_DIR, HF_DATASET_SOURCES, RANDOM_SEED, TRAINING_DATASETS
+from typographic.features import ocr
 
 
 def _funsd_records(example, dataset_name):
@@ -200,6 +201,77 @@ def download_figstep(force: bool = False) -> dict:
     metadata = {"dataset": BENCHMARK_DATASET, "source": repo_id, "num_images": len(entries), "images": entries}
     metadata_path.write_text(json.dumps(metadata, indent=2))
     print(f"[{BENCHMARK_DATASET}] done: {len(entries)} images -> {out_dir}")
+    return metadata
+
+
+def download_external_sample(name: str, split: str, n: int, seed: int = RANDOM_SEED, force: bool = False) -> dict:
+    """Stream-sample n pages from an external Hugging Face dataset too large to
+    fully download (e.g. DocLayNet, ~32GB), and save images + OCR-derived
+    annotations under datasets/<name>/ - same folder shape as download_dataset().
+
+    Unlike the training datasets, annotations here come from our own OCR
+    pipeline (features/ocr.py) rather than dataset-specific ground-truth
+    parsing: it's the same source of truth used everywhere else in the
+    pipeline, and avoids a one-off coordinate-system conversion (e.g.
+    DocLayNet's pdf_cells are in PDF point-space, not image-pixel-space, with
+    a different aspect ratio and possibly a flipped y-axis - not worth the
+    risk when OCR already does this job reliably). This annotation is only
+    ever used by attack_generator.py for placement decisions, exactly like
+    the ground-truth annotations for FUNSD/CORD/SROIE.
+
+    Generic by name/repo/split/n so it can be reused for future external
+    benchmarks beyond DocLayNet, not just this one dataset.
+    """
+    out_dir = DATASETS_DIR / name
+    images_dir = out_dir / "images"
+    annotations_dir = out_dir / "annotations"
+    metadata_path = out_dir / "metadata.json"
+
+    if metadata_path.exists() and not force:
+        print(f"[{name}] already sampled at {out_dir} (pass force=True to resample)")
+        return json.loads(metadata_path.read_text())
+
+    images_dir.mkdir(parents=True, exist_ok=True)
+    annotations_dir.mkdir(parents=True, exist_ok=True)
+
+    repo_id = HF_DATASET_SOURCES[name]
+    print(f"[{name}] stream-sampling {n} pages from {repo_id} ({split} split)...")
+    stream = load_dataset(repo_id, split=split, streaming=True)
+    stream = stream.shuffle(seed=seed, buffer_size=max(n * 5, 1000))
+
+    entries = []
+    for i, example in enumerate(stream.take(n)):
+        image_id = f"{name}_{i:04d}"
+
+        image = example["image"]
+        if image.mode != "RGB":
+            image = image.convert("RGB")
+        image_filename = f"{image_id}.png"
+        image.save(images_dir / image_filename)
+
+        regions = ocr.extract_regions(str(images_dir / image_filename))
+        annotation_filename = f"{image_id}.json"
+        (annotations_dir / annotation_filename).write_text(json.dumps(regions, indent=2))
+
+        doc_category = example.get("metadata", {}).get("doc_category") if isinstance(example.get("metadata"), dict) else None
+
+        entries.append({
+            "image_id": image_id,
+            "dataset": name,
+            "image_file": f"images/{image_filename}",
+            "annotation_file": f"annotations/{annotation_filename}",
+            "doc_category": doc_category,
+            "page_width": image.width,
+            "page_height": image.height,
+            "num_regions": len(regions),
+        })
+
+        if (i + 1) % 25 == 0:
+            print(f"[{name}] sampled {i + 1}/{n}")
+
+    metadata = {"dataset": name, "source": repo_id, "split": split, "seed": seed, "num_images": len(entries), "images": entries}
+    metadata_path.write_text(json.dumps(metadata, indent=2))
+    print(f"[{name}] done: {len(entries)} images -> {out_dir}")
     return metadata
 
 

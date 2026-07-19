@@ -12,6 +12,7 @@ import random
 
 from typographic.config import (
     DATASETS_DIR,
+    DOCLAYNET_SAMPLED_PATH,
     RANDOM_SEED,
     SAMPLED_IMAGES_PATH,
     SAMPLES_PER_DATASET,
@@ -58,6 +59,41 @@ def sample_images(force: bool = False) -> dict:
     }
     SAMPLED_IMAGES_PATH.write_text(json.dumps(result, indent=2))
     print(f"sampled {len(sampled)} images -> {SAMPLED_IMAGES_PATH}")
+    return result
+
+
+def sample_doclaynet(force: bool = False) -> dict:
+    """Reshape datasets/DocLayNet/metadata.json (already exactly N sampled
+    pages, produced by download.download_external_sample()) into the same
+    frozen sampled_images.json-style format attack_generator.py expects."""
+    if DOCLAYNET_SAMPLED_PATH.exists() and not force:
+        print(f"{DOCLAYNET_SAMPLED_PATH} already exists - frozen, not regenerating "
+              f"(pass force=True to override deliberately)")
+        return json.loads(DOCLAYNET_SAMPLED_PATH.read_text())
+
+    metadata_path = DATASETS_DIR / "DocLayNet" / "metadata.json"
+    if not metadata_path.exists():
+        raise FileNotFoundError(
+            f"{metadata_path} not found - run download.download_external_sample('DocLayNet', ...) first"
+        )
+    metadata = json.loads(metadata_path.read_text())
+
+    sampled = [{
+        "image_id": entry["image_id"],
+        "dataset": entry["dataset"],
+        "image_file": f"DocLayNet/{entry['image_file']}",
+        "annotation_file": f"DocLayNet/{entry['annotation_file']}",
+        "doc_category": entry.get("doc_category"),
+    } for entry in metadata["images"]]
+
+    result = {
+        "seed": metadata["seed"],
+        "samples_per_dataset": len(sampled),
+        "total": len(sampled),
+        "images": sampled,
+    }
+    DOCLAYNET_SAMPLED_PATH.write_text(json.dumps(result, indent=2))
+    print(f"sampled {len(sampled)} DocLayNet images -> {DOCLAYNET_SAMPLED_PATH}")
     return result
 
 

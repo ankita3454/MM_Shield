@@ -37,10 +37,13 @@ def _get_regions(image_id: str, image_path) -> list[dict]:
     return regions
 
 
-def _iter_entries():
-    """Yields (image_id, source_image_id, dataset, label, image_path, attack_info)
-    for all 150 clean + 150 malicious images."""
-    sampled = json.loads(SAMPLED_IMAGES_PATH.read_text())
+def _iter_entries(sampled_path=SAMPLED_IMAGES_PATH, attack_metadata_path=ATTACK_METADATA_PATH):
+    """Yields one dict per clean + malicious image (image_id, source_image_id,
+    dataset, label, image_path, doc_category, attack_info). doc_category is
+    only present for datasets that carry it (e.g. DocLayNet); None otherwise."""
+    sampled = json.loads(sampled_path.read_text())
+    doc_categories = {entry["image_id"]: entry.get("doc_category") for entry in sampled["images"]}
+
     for entry in sampled["images"]:
         yield {
             "image_id": entry["image_id"],
@@ -48,10 +51,11 @@ def _iter_entries():
             "dataset": entry["dataset"],
             "label": "clean",
             "image_path": DATASETS_DIR / entry["image_file"],
+            "doc_category": entry.get("doc_category"),
             "attack_info": None,
         }
 
-    attacks = json.loads(ATTACK_METADATA_PATH.read_text())
+    attacks = json.loads(attack_metadata_path.read_text())
     for attack in attacks["attacks"]:
         yield {
             "image_id": attack["malicious_id"],
@@ -59,23 +63,38 @@ def _iter_entries():
             "dataset": attack["source_dataset"],
             "label": "malicious",
             "image_path": DATASETS_DIR / attack["image_file"],
+            "doc_category": doc_categories.get(attack["source_image_id"]),
             "attack_info": attack,
         }
 
 
-def build_dataset(force: bool = False) -> None:
-    if FEATURE_DATASET_PATH.exists() and FEATURE_METADATA_PATH.exists() and not force:
-        print(f"{FEATURE_DATASET_PATH} and {FEATURE_METADATA_PATH} already exist - not regenerating "
+def build_dataset(
+    sampled_path=SAMPLED_IMAGES_PATH,
+    attack_metadata_path=ATTACK_METADATA_PATH,
+    feature_dataset_path=FEATURE_DATASET_PATH,
+    feature_metadata_path=FEATURE_METADATA_PATH,
+    force: bool = False,
+) -> None:
+    """Builds feature_dataset_path (ML-facing CSV) and feature_metadata_path
+    (debugging/error-analysis JSON) from every clean + malicious image in
+    sampled_path/attack_metadata_path. Defaults reproduce the original
+    300-image FUNSD/CORD/SROIE build exactly; pass different paths (as done
+    for DocLayNet) to build a second feature dataset without touching the
+    existing frozen one."""
+    if feature_dataset_path.exists() and feature_metadata_path.exists() and not force:
+        print(f"{feature_dataset_path} and {feature_metadata_path} already exist - not regenerating "
               f"(pass force=True to override deliberately)")
         return
 
     OCR_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
     feature_names = feature_fusion.get_feature_names()
+    entries = list(_iter_entries(sampled_path, attack_metadata_path))
+    total = len(entries)
     csv_rows = []
     metadata_rows = []
 
-    for i, entry in enumerate(_iter_entries()):
+    for i, entry in enumerate(entries):
         image_id = entry["image_id"]
         regions = _get_regions(image_id, entry["image_path"])
         image = Image.open(entry["image_path"]).convert("RGB")
@@ -96,6 +115,7 @@ def build_dataset(force: bool = False) -> None:
             "source_image_id": entry["source_image_id"],
             "dataset": entry["dataset"],
             "label": entry["label"],
+            "doc_category": entry["doc_category"],
             "ocr_cache": str(OCR_CACHE_DIR / f"{image_id}.json"),
             "num_regions": fused["num_regions"],
             "attack_category": attack["category"] if attack else None,
@@ -107,17 +127,17 @@ def build_dataset(force: bool = False) -> None:
         })
 
         if (i + 1) % 25 == 0:
-            print(f"processed {i + 1}/300 images")
+            print(f"processed {i + 1}/{total} images")
 
-    with open(FEATURE_DATASET_PATH, "w", newline="") as f:
+    with open(feature_dataset_path, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=["image_id", "source_image_id", "dataset", "label"] + feature_names)
         writer.writeheader()
         writer.writerows(csv_rows)
 
-    FEATURE_METADATA_PATH.write_text(json.dumps(metadata_rows, indent=2))
+    feature_metadata_path.write_text(json.dumps(metadata_rows, indent=2))
 
-    print(f"wrote {len(csv_rows)} rows -> {FEATURE_DATASET_PATH}")
-    print(f"wrote {len(metadata_rows)} entries -> {FEATURE_METADATA_PATH}")
+    print(f"wrote {len(csv_rows)} rows -> {feature_dataset_path}")
+    print(f"wrote {len(metadata_rows)} entries -> {feature_metadata_path}")
 
 
 if __name__ == "__main__":

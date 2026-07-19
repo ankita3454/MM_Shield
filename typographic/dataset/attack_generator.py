@@ -23,6 +23,7 @@ from typographic.config import (
 )
 
 ATTACKS_DIR = DATASETS_DIR / "attacks"
+DOCLAYNET_ATTACKS_DIR = DATASETS_DIR / "doclaynet_attacks"
 
 # A small, fixed set of macOS system fonts spanning serif/sans/monospace/display
 # styles, so injected text doesn't all look the same. Falls back to Pillow's
@@ -85,7 +86,7 @@ def _choose_position(mode, canvas_size, text_size, word_bboxes, rng):
     return x, y
 
 
-def generate_attack(clean_entry: dict, index: int, templates: dict, rng: random.Random) -> dict:
+def generate_attack(clean_entry: dict, templates: dict, rng: random.Random, attacks_dir=ATTACKS_DIR) -> dict:
     image_path = DATASETS_DIR / clean_entry["image_file"]
     annotation_path = DATASETS_DIR / clean_entry["annotation_file"]
 
@@ -127,13 +128,13 @@ def generate_attack(clean_entry: dict, index: int, templates: dict, rng: random.
 
     malicious_id = f"{clean_entry['image_id']}_malicious"
     output_filename = f"{malicious_id}.png"
-    composed.save(ATTACKS_DIR / output_filename)
+    composed.save(attacks_dir / output_filename)
 
     return {
         "malicious_id": malicious_id,
         "source_image_id": clean_entry["image_id"],
         "source_dataset": clean_entry["dataset"],
-        "image_file": f"attacks/{output_filename}",
+        "image_file": f"{attacks_dir.relative_to(DATASETS_DIR)}/{output_filename}",
         "category": category,
         "phrase": phrase,
         "rendered_text": rendered_text,
@@ -147,28 +148,37 @@ def generate_attack(clean_entry: dict, index: int, templates: dict, rng: random.
     }
 
 
-def generate_all_attacks(force: bool = False) -> dict:
-    if ATTACK_METADATA_PATH.exists() and not force:
-        print(f"attack_metadata.json already exists at {ATTACK_METADATA_PATH} - not regenerating "
+def generate_all_attacks(
+    sampled_path=SAMPLED_IMAGES_PATH,
+    attacks_dir=ATTACKS_DIR,
+    attack_metadata_path=ATTACK_METADATA_PATH,
+    force: bool = False,
+) -> dict:
+    """Generate one malicious counterpart for every entry in sampled_path.
+    Defaults reproduce the original 150-image FUNSD/CORD/SROIE run exactly;
+    pass different paths (as done for DocLayNet) to reuse this on another
+    sampled-image set without touching the existing frozen output."""
+    if attack_metadata_path.exists() and not force:
+        print(f"{attack_metadata_path} already exists - not regenerating "
               f"(pass force=True to override deliberately)")
-        return json.loads(ATTACK_METADATA_PATH.read_text())
+        return json.loads(attack_metadata_path.read_text())
 
-    if not SAMPLED_IMAGES_PATH.exists():
-        raise FileNotFoundError(f"{SAMPLED_IMAGES_PATH} not found - run sampler.sample_images() first")
+    if not sampled_path.exists():
+        raise FileNotFoundError(f"{sampled_path} not found - sample the images first")
 
-    ATTACKS_DIR.mkdir(parents=True, exist_ok=True)
+    attacks_dir.mkdir(parents=True, exist_ok=True)
 
-    sampled = json.loads(SAMPLED_IMAGES_PATH.read_text())
+    sampled = json.loads(sampled_path.read_text())
     templates = json.loads(ATTACK_TEMPLATES_PATH.read_text())
     rng = random.Random(RANDOM_SEED)
 
     attacks = []
-    for index, clean_entry in enumerate(sampled["images"]):
-        attacks.append(generate_attack(clean_entry, index, templates, rng))
+    for clean_entry in sampled["images"]:
+        attacks.append(generate_attack(clean_entry, templates, rng, attacks_dir=attacks_dir))
 
     metadata = {"seed": RANDOM_SEED, "total": len(attacks), "attacks": attacks}
-    ATTACK_METADATA_PATH.write_text(json.dumps(metadata, indent=2))
-    print(f"generated {len(attacks)} malicious images -> {ATTACKS_DIR}")
+    attack_metadata_path.write_text(json.dumps(metadata, indent=2))
+    print(f"generated {len(attacks)} malicious images -> {attacks_dir}")
     return metadata
 
 

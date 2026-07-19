@@ -15,16 +15,41 @@ error analysis and paper figures.
 import json
 
 import joblib
+import pandas as pd
 from PIL import Image
+from sklearn.metrics import (
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
 
-from typographic.config import BENCHMARK_DATASET, DATASETS_DIR, OUTPUTS_DIR
-from typographic.dataset.download import download_figstep
+from typographic.config import (
+    BENCHMARK_DATASET,
+    DATASETS_DIR,
+    DOCLAYNET_ATTACK_METADATA_PATH,
+    DOCLAYNET_SAMPLE_SIZE,
+    DOCLAYNET_SAMPLED_PATH,
+    DOCLAYNET_SPLIT,
+    OUTPUTS_DIR,
+)
+from typographic.dataset import dataset_builder, sampler
+from typographic.dataset.attack_generator import DOCLAYNET_ATTACKS_DIR, generate_all_attacks
+from typographic.dataset.download import download_external_sample, download_figstep
 from typographic.features import feature_fusion, ocr
 from typographic.training.train import BEST_MODEL_PATH
 
 BENCHMARK_OCR_CACHE_DIR = OUTPUTS_DIR / "figstep_ocr_cache"
 BENCHMARK_RESULTS_PATH = OUTPUTS_DIR / "figstep_results.json"
 BENCHMARK_REPORT_PATH = OUTPUTS_DIR / "figstep_report.json"
+
+DOCLAYNET_FEATURE_DATASET_PATH = OUTPUTS_DIR / "doclaynet_feature_dataset.csv"
+DOCLAYNET_FEATURE_METADATA_PATH = OUTPUTS_DIR / "doclaynet_feature_metadata.json"
+DOCLAYNET_RESULTS_PATH = OUTPUTS_DIR / "doclaynet_results.json"
+DOCLAYNET_REPORT_PATH = OUTPUTS_DIR / "doclaynet_report.json"
+
+FEATURE_NAMES = feature_fusion.get_feature_names()
 
 
 def _get_regions(image_id: str, image_path) -> list[dict]:
@@ -100,5 +125,87 @@ def run_benchmark(force: bool = False) -> dict:
     return report
 
 
+def run_doclaynet_benchmark(force: bool = False) -> dict:
+    """External zero-shot benchmark on DocLayNet: unlike FigStep, attacks are
+    generated on it the same way as the training datasets, so it has a clean
+    counterpart class - full accuracy/precision/recall/F1/ROC-AUC apply, plus
+    a per-doc_category breakdown (financial_reports, manuals, patents, etc.)
+    since DocLayNet provides that metadata. Reuses every existing pipeline
+    stage (download/sample/attack-generate/feature-build) end to end; no
+    retraining."""
+    if DOCLAYNET_REPORT_PATH.exists() and not force:
+        print(f"{DOCLAYNET_REPORT_PATH} already exists - not rerunning (pass force=True to override deliberately)")
+        return json.loads(DOCLAYNET_REPORT_PATH.read_text())
+
+    download_external_sample("DocLayNet", split=DOCLAYNET_SPLIT, n=DOCLAYNET_SAMPLE_SIZE)
+    sampler.sample_doclaynet()
+    generate_all_attacks(
+        sampled_path=DOCLAYNET_SAMPLED_PATH,
+        attacks_dir=DOCLAYNET_ATTACKS_DIR,
+        attack_metadata_path=DOCLAYNET_ATTACK_METADATA_PATH,
+    )
+    dataset_builder.build_dataset(
+        sampled_path=DOCLAYNET_SAMPLED_PATH,
+        attack_metadata_path=DOCLAYNET_ATTACK_METADATA_PATH,
+        feature_dataset_path=DOCLAYNET_FEATURE_DATASET_PATH,
+        feature_metadata_path=DOCLAYNET_FEATURE_METADATA_PATH,
+    )
+
+    model = joblib.load(BEST_MODEL_PATH)
+    df = pd.read_csv(DOCLAYNET_FEATURE_DATASET_PATH)
+    metadata_rows = {m["image_id"]: m for m in json.loads(DOCLAYNET_FEATURE_METADATA_PATH.read_text())}
+
+    X = df[FEATURE_NAMES].values
+    y_true = (df["label"] == "malicious").astype(int).values
+    y_pred = model.predict(X)
+    y_proba = model.predict_proba(X)[:, 1]
+
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+
+    results = []
+    for image_id, true_label, pred, proba in zip(df["image_id"], df["label"], y_pred, y_proba):
+        results.append({
+            "image_id": image_id,
+            "doc_category": metadata_rows[image_id]["doc_category"],
+            "true_label": true_label,
+            "predicted_label": "malicious" if pred == 1 else "clean",
+            "malicious_probability": float(proba),
+            "correct": bool((pred == 1) == (true_label == "malicious")),
+        })
+
+    per_category = {}
+    for r in results:
+        cat = r["doc_category"] or "unknown"
+        stats = per_category.setdefault(cat, {"total": 0, "correct": 0, "malicious_total": 0, "malicious_detected": 0})
+        stats["total"] += 1
+        stats["correct"] += int(r["correct"])
+        if r["true_label"] == "malicious":
+            stats["malicious_total"] += 1
+            stats["malicious_detected"] += int(r["predicted_label"] == "malicious")
+    for stats in per_category.values():
+        stats["accuracy"] = stats["correct"] / stats["total"]
+        stats["detection_rate"] = (stats["malicious_detected"] / stats["malicious_total"]) if stats["malicious_total"] else None
+
+    report = {
+        "dataset": "DocLayNet",
+        "num_total": len(results),
+        "accuracy": float((y_pred == y_true).mean()),
+        "precision": float(precision_score(y_true, y_pred)),
+        "recall": float(recall_score(y_true, y_pred)),
+        "f1": float(f1_score(y_true, y_pred)),
+        "roc_auc": float(roc_auc_score(y_true, y_proba)),
+        "confusion_matrix": {"tn": int(tn), "fp": int(fp), "fn": int(fn), "tp": int(tp)},
+        "per_doc_category": per_category,
+    }
+
+    DOCLAYNET_RESULTS_PATH.write_text(json.dumps(results, indent=2))
+    DOCLAYNET_REPORT_PATH.write_text(json.dumps(report, indent=2))
+
+    print(json.dumps({k: v for k, v in report.items() if k != "per_doc_category"}, indent=2))
+    print(f"saved -> {DOCLAYNET_REPORT_PATH}")
+    return report
+
+
 if __name__ == "__main__":
     run_benchmark()
+    run_doclaynet_benchmark()
