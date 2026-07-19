@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
+
+# Downloaded/generated datasets are large and reproducible from download.py + sampler.py + attack_generator.py — never commit
+datasets/FUNSD/
+datasets/CORD/
+datasets/SROIE/
+datasets/FinInject/
+
+# sampled_images.json and attack_metadata.json ARE committed (frozen, small, define the reproducible sample)
+
+typographic/outputs/
+*.pkl
+*.egg-info/

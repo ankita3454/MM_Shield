@@ -1,0 +1,4 @@
+datasets
+huggingface_hub
+Pillow
+numpy
