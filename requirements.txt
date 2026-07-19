@@ -2,3 +2,7 @@ datasets
 huggingface_hub
 Pillow
 numpy
+paddleocr
+paddlepaddle
+sentence-transformers
+opencv-python
