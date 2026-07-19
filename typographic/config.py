@@ -25,11 +25,15 @@ HF_DATASET_SOURCES = {
     "FUNSD": "nielsr/funsd",
     "CORD": "naver-clova-ix/cord-v2",
     "SROIE": "rth/sroie-2019-v2",
+    "FigStep": "AngelAlita/FigStep",
 }
 
-# FinInject is the external benchmark only — never used for training/fine-tuning.
+# FigStep is the external zero-shot benchmark only — never used for training/
+# fine-tuning. It is 100% attack images (no clean counterpart class), so the
+# only meaningful metric on it is detection rate (recall), not accuracy/
+# precision/ROC-AUC. See typographic/training/benchmark.py.
 TRAINING_DATASETS = ("FUNSD", "CORD", "SROIE")
-BENCHMARK_DATASET = "FinInject"
+BENCHMARK_DATASET = "FigStep"
 
 # --- Sampling ----------------------------------------------------------------
 

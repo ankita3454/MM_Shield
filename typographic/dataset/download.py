@@ -16,7 +16,7 @@ import json
 
 from datasets import load_dataset
 
-from typographic.config import DATASETS_DIR, HF_DATASET_SOURCES, TRAINING_DATASETS
+from typographic.config import BENCHMARK_DATASET, DATASETS_DIR, HF_DATASET_SOURCES, TRAINING_DATASETS
 
 
 def _funsd_records(example, dataset_name):
@@ -158,6 +158,49 @@ def download_dataset(name: str, force: bool = False) -> dict:
 def download_all(force: bool = False) -> None:
     for name in TRAINING_DATASETS:
         download_dataset(name, force=force)
+
+
+def download_figstep(force: bool = False) -> dict:
+    """Download the FigStep external zero-shot benchmark (500 typographic
+    jailbreak images, no clean counterpart class - see
+    typographic/training/benchmark.py). Unlike the training datasets, FigStep
+    has no per-word ground-truth annotations to normalize; only images plus
+    benchmark-specific metadata (category, question, instruction) are saved."""
+    out_dir = DATASETS_DIR / BENCHMARK_DATASET
+    images_dir = out_dir / "images"
+    metadata_path = out_dir / "metadata.json"
+
+    if metadata_path.exists() and not force:
+        print(f"[{BENCHMARK_DATASET}] already downloaded at {out_dir} (pass force=True to redownload)")
+        return json.loads(metadata_path.read_text())
+
+    images_dir.mkdir(parents=True, exist_ok=True)
+    repo_id = HF_DATASET_SOURCES[BENCHMARK_DATASET]
+
+    print(f"[{BENCHMARK_DATASET}] downloading {repo_id} from Hugging Face...")
+    dataset = load_dataset(repo_id, split="test")
+
+    entries = []
+    for i, example in enumerate(dataset):
+        image_id = f"{BENCHMARK_DATASET}_{i:04d}"
+        image = example["image"]
+        if image.mode != "RGB":
+            image = image.convert("RGB")
+        image_filename = f"{image_id}.png"
+        image.save(images_dir / image_filename)
+
+        entries.append({
+            "image_id": image_id,
+            "image_file": f"images/{image_filename}",
+            "category_name": example["category_name"],
+            "question": example["question"],
+            "instruction": example["instruction"],
+        })
+
+    metadata = {"dataset": BENCHMARK_DATASET, "source": repo_id, "num_images": len(entries), "images": entries}
+    metadata_path.write_text(json.dumps(metadata, indent=2))
+    print(f"[{BENCHMARK_DATASET}] done: {len(entries)} images -> {out_dir}")
+    return metadata
 
 
 if __name__ == "__main__":

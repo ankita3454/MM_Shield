@@ -7,7 +7,7 @@ __pycache__/
 datasets/FUNSD/
 datasets/CORD/
 datasets/SROIE/
-datasets/FinInject/
+datasets/FigStep/
 
 # sampled_images.json and attack_metadata.json ARE committed (frozen, small, define the reproducible sample)
 
