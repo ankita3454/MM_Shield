@@ -6,3 +6,6 @@ paddleocr
 paddlepaddle
 sentence-transformers
 opencv-python
+pandas
+scikit-learn
+xgboost
