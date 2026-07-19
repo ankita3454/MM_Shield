@@ -163,8 +163,9 @@ def _run_evaluate_stage(run_id: str = CHOSEN_RUN_ID, force: bool = False) -> dic
     X_s = scaler.transform(X)
     X_p = pca_model.transform(X_s) if pca_model is not None else X_s
 
-    y_pred = model.predict(X_p)
+    threshold = metadata.get("threshold", 0.5)
     y_proba = model.predict_proba(X_p)[:, 1]
+    y_pred = (y_proba >= threshold).astype(int)
 
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
 
@@ -185,6 +186,7 @@ def _run_evaluate_stage(run_id: str = CHOSEN_RUN_ID, force: bool = False) -> dic
     report = {
         "run_id": run_id,
         "dataset": "DocLayNet",
+        "threshold": threshold,
         "num_total": len(y_true),
         "num_positive": int((y_true == 1).sum()),
         "precision": float(precision_score(y_true, y_pred, zero_division=0)),

@@ -68,11 +68,13 @@ def evaluate_on_test(run_id: str = CHOSEN_RUN_ID, force: bool = False) -> dict:
     X_test_s = scaler.transform(X_test)
     X_test_p = pca_model.transform(X_test_s) if pca_model is not None else X_test_s
 
-    test_pred = model.predict(X_test_p)
+    threshold = metadata.get("threshold", 0.5)
     test_proba = model.predict_proba(X_test_p)[:, 1]
+    test_pred = (test_proba >= threshold).astype(int)
 
     metrics = {
         "run_id": run_id,
+        "threshold": threshold,
         "n_test": len(y_test), "n_test_positive": int((y_test == 1).sum()),
         "test_precision": float(precision_score(y_test, test_pred, zero_division=0)),
         "test_recall": float(recall_score(y_test, test_pred, zero_division=0)),

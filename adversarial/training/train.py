@@ -79,7 +79,7 @@ FEATURE_CONFIGS = {
 CLASSIFIER_NAMES = ["rf", "xgboost", "svm"]
 
 _EXPERIMENT_LOG_FIELDS = [
-    "run_id", "features", "classifier", "pca", "imbalance",
+    "run_id", "features", "classifier", "pca", "imbalance", "threshold",
     "n_train", "n_train_positive", "n_val", "n_val_positive",
     "val_precision", "val_recall", "val_f1", "val_roc_auc", "val_pr_auc",
     "timestamp",
@@ -115,6 +115,23 @@ def _random_oversample(X, y, seed: int):
     all_idx = np.concatenate([np.arange(len(y)), extra])
     rng.shuffle(all_idx)
     return X[all_idx], y[all_idx]
+
+
+def _select_threshold(y_true, proba) -> float:
+    """Classification threshold maximizing F1 on the given (validation-only)
+    labels/probabilities. Sweeps every observed probability as a candidate
+    boundary (not a coarse grid) so the true optimum for this prediction set
+    is found exactly. Locked design (2026-07-20): every run's .predict() call
+    was implicitly using the raw 0.5 default, never actually tuned - this is
+    the fix, and it is fit on validation only, exactly once per run, never
+    on test.csv or DocLayNet (mirrors the same fit-on-train/validation-only
+    principle already used for the scaler and PCA)."""
+    best_threshold, best_f1 = 0.5, -1.0
+    for t in np.unique(proba):
+        f1 = f1_score(y_true, (proba >= t).astype(int), zero_division=0)
+        if f1 > best_f1:
+            best_f1, best_threshold = f1, float(t)
+    return best_threshold
 
 
 def _build_classifier(name: str, imbalance: str, scale_pos_weight: float):
@@ -184,8 +201,9 @@ def run_experiment(features: str, classifier: str, pca: str, imbalance: str, for
     model = _build_classifier(classifier, imbalance, scale_pos_weight)
     model.fit(X_fit, y_fit)
 
-    val_pred = model.predict(X_val_p)
     val_proba = model.predict_proba(X_val_p)[:, 1]
+    threshold = _select_threshold(y_val, val_proba)
+    val_pred = (val_proba >= threshold).astype(int)
 
     metrics = {
         "val_precision": float(precision_score(y_val, val_pred, zero_division=0)),
@@ -207,6 +225,7 @@ def run_experiment(features: str, classifier: str, pca: str, imbalance: str, for
         "classifier": classifier,
         "pca": pca_label,
         "imbalance": imbalance,
+        "threshold": threshold,
         "feature_names": FEATURE_CONFIGS[features][2],
         "raw_feature_dim": X_train.shape[1],
         "n_train": len(y_train), "n_train_positive": n_pos,
