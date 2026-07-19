@@ -19,3 +19,15 @@ datasets/DocLayNet/
 typographic/outputs/
 *.pkl
 *.egg-info/
+
+# Adversarial module: unlike Typographic, attack_generator.py here uses only
+# procedural drawing (no system fonts), so patched images and candidate crops
+# ARE perfectly reproducible cross-platform from committed code + committed
+# clean images + fixed seed — no font-portability exception needed.
+# adversarial/attack_metadata.json IS committed (frozen, small, defines the
+# reproducible random choices), same reasoning as typographic's.
+datasets/adversarial/attacks/
+datasets/adversarial/candidates/
+datasets/adversarial/candidate_labels.csv
+datasets/adversarial/candidate_metadata.json
+adversarial/outputs/

@@ -58,7 +58,34 @@ BENCHMARK_DATASET = "DocLayNet"
 SAMPLES_PER_DATASET = 50
 
 # --- Candidate generation -----------------------------------------------------
-# Candidate generation MUST run on both clean and attacked pages (clean ->
-# negative samples, attacked -> positive samples) - the old implementation's
-# core flaw was only ever running it on attacked pages. See MEMORY.
-CANDIDATES_PER_IMAGE = 3
+# Candidate generation MUST run on both clean and attacked pages - the old
+# implementation's core flaw was only ever running it on attacked pages.
+#   clean page    -> every candidate            -> negative
+#   attacked page -> patch_coverage >= threshold -> positive
+#   attacked page -> patch_coverage <  threshold -> hard_negative (label 0,
+#                    tagged distinctly in metadata - kept, not discarded)
+# patch_coverage = intersection_area / ground_truth_patch_area, NOT standard
+# IoU - an oversized-but-correct proposal shouldn't be penalized for a large
+# union.
+#
+# Region proposal is connected components on the thresholded heatmap, PLUS
+# an explicit max-area cap - a hybrid reached after two empirical rounds:
+# a pure sliding-window search (fixed square windows, scored by mean heatmap
+# value) was tried first and performed worse (13% genuine recall on a 30-
+# image test vs. 30% here) because a fixed square window's mean score gets
+# diluted by non-patch background pixels whenever a patch is rotated
+# (frequently diamond-shaped within its bbox) or doesn't match the window's
+# size/aspect exactly - connected components trace whatever shape the actual
+# signal forms, without that dilution. But connected components alone
+# degenerate at low score thresholds into whole-page-covering blobs (up to
+# ~90% of the page) that trivially "contain" the patch without meaningfully
+# localizing it - MAX_CANDIDATE_AREA_FRACTION blocks that failure mode
+# (0.20 is deliberately close to the largest a patch can plausibly be: even
+# at attack_generator's max 35%-of-shorter-side scale, worst-case rotation-
+# bbox expansion tops out around 18-19% of page area, so this cap doesn't
+# exclude genuine patch-sized detections). MAX_CANDIDATES_PER_IMAGE is a cap,
+# not a fixed count: a page with only one strong candidate keeps one.
+MAX_CANDIDATES_PER_IMAGE = 12
+CANDIDATE_SCORE_THRESHOLD = 0.3
+MAX_CANDIDATE_AREA_FRACTION = 0.20
+PATCH_COVERAGE_THRESHOLD = 0.5
