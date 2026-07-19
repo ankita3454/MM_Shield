@@ -31,3 +31,11 @@ datasets/adversarial/candidates/
 datasets/adversarial/candidate_labels.csv
 datasets/adversarial/candidate_metadata.json
 adversarial/outputs/
+
+# Phase 5: same reasoning applies to the DocLayNet benchmark run -
+# doclaynet_attack_metadata.json is committed (frozen, small, reproducible
+# random choices); the generated images/crops/labels are not.
+datasets/adversarial/doclaynet_attacks/
+datasets/adversarial/doclaynet_candidates/
+datasets/adversarial/doclaynet_candidate_labels.csv
+datasets/adversarial/doclaynet_candidate_metadata.json

@@ -25,18 +25,30 @@ FUSED_FEATURES_PATH = OUTPUTS_DIR / "fused_features.csv"
 _METADATA_COLUMNS = ["candidate_id", "source_image_id", "dataset", "label", "source_type"]
 
 
-def fuse_features(force: bool = False) -> pd.DataFrame:
-    if FUSED_FEATURES_PATH.exists() and not force:
-        print(f"{FUSED_FEATURES_PATH} already exists - not regenerating (pass force=True to override deliberately)")
-        return pd.read_csv(FUSED_FEATURES_PATH)
+def fuse_features(
+    labels_path=None,
+    cnn_path=CNN_FEATURES_PATH,
+    handcrafted_path=HANDCRAFTED_FEATURES_PATH,
+    output_path=FUSED_FEATURES_PATH,
+    force: bool = False,
+) -> pd.DataFrame:
+    if output_path.exists() and not force:
+        print(f"{output_path} already exists - not regenerating (pass force=True to override deliberately)")
+        return pd.read_csv(output_path)
 
-    if not CNN_FEATURES_PATH.exists():
-        extract_cnn_features()
-    if not HANDCRAFTED_FEATURES_PATH.exists():
-        extract_handcrafted_features()
+    extract_cnn_kwargs = {"output_path": cnn_path}
+    extract_handcrafted_kwargs = {"output_path": handcrafted_path}
+    if labels_path is not None:
+        extract_cnn_kwargs["labels_path"] = labels_path
+        extract_handcrafted_kwargs["labels_path"] = labels_path
 
-    cnn_df = pd.read_csv(CNN_FEATURES_PATH)
-    handcrafted_df = pd.read_csv(HANDCRAFTED_FEATURES_PATH)
+    if not cnn_path.exists():
+        extract_cnn_features(**extract_cnn_kwargs)
+    if not handcrafted_path.exists():
+        extract_handcrafted_features(**extract_handcrafted_kwargs)
+
+    cnn_df = pd.read_csv(cnn_path)
+    handcrafted_df = pd.read_csv(handcrafted_path)
 
     if cnn_df["candidate_id"].duplicated().any():
         raise ValueError("duplicate candidate_id in cnn_features.csv")
@@ -56,8 +68,8 @@ def fuse_features(force: bool = False) -> pd.DataFrame:
         raise ValueError("NaNs present in fused_features.csv after join")
 
     fused_df = fused_df.sort_values("candidate_id").reset_index(drop=True)
-    fused_df.to_csv(FUSED_FEATURES_PATH, index=False)
-    print(f"wrote {len(fused_df)} rows, {fused_df.shape[1]} columns -> {FUSED_FEATURES_PATH}")
+    fused_df.to_csv(output_path, index=False)
+    print(f"wrote {len(fused_df)} rows, {fused_df.shape[1]} columns -> {output_path}")
     return fused_df
 
 

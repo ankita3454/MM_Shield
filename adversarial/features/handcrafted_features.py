@@ -130,12 +130,16 @@ def extract_crop_handcrafted_features(image: Image.Image) -> dict:
     }
 
 
-def extract_handcrafted_features(force: bool = False) -> pd.DataFrame:
-    if HANDCRAFTED_FEATURES_PATH.exists() and not force:
-        print(f"{HANDCRAFTED_FEATURES_PATH} already exists - not regenerating (pass force=True to override deliberately)")
-        return pd.read_csv(HANDCRAFTED_FEATURES_PATH)
+def extract_handcrafted_features(
+    labels_path=CANDIDATE_LABELS_PATH,
+    output_path=HANDCRAFTED_FEATURES_PATH,
+    force: bool = False,
+) -> pd.DataFrame:
+    if output_path.exists() and not force:
+        print(f"{output_path} already exists - not regenerating (pass force=True to override deliberately)")
+        return pd.read_csv(output_path)
 
-    df = pd.read_csv(CANDIDATE_LABELS_PATH)
+    df = pd.read_csv(labels_path)
     rows = []
     total = len(df)
     for i, candidate in df.iterrows():
@@ -156,8 +160,8 @@ def extract_handcrafted_features(force: bool = False) -> pd.DataFrame:
             print(f"processed {done}/{total} candidates")
 
     out_df = pd.DataFrame(rows)
-    out_df.to_csv(HANDCRAFTED_FEATURES_PATH, index=False)
-    print(f"wrote {len(out_df)} rows -> {HANDCRAFTED_FEATURES_PATH}")
+    out_df.to_csv(output_path, index=False)
+    print(f"wrote {len(out_df)} rows -> {output_path}")
     return out_df
 
 

@@ -42,6 +42,8 @@ PATCH_LIBRARY_DIR = Path(__file__).resolve().parent / "dataset" / "patches"
 DOCLAYNET_ATTACK_METADATA_PATH = ADVERSARIAL_DATASETS_DIR / "doclaynet_attack_metadata.json"
 DOCLAYNET_ATTACKS_DIR = ADVERSARIAL_DATASETS_DIR / "doclaynet_attacks"
 DOCLAYNET_CANDIDATES_DIR = ADVERSARIAL_DATASETS_DIR / "doclaynet_candidates"
+DOCLAYNET_CANDIDATE_LABELS_PATH = ADVERSARIAL_DATASETS_DIR / "doclaynet_candidate_labels.csv"
+DOCLAYNET_CANDIDATE_METADATA_PATH = ADVERSARIAL_DATASETS_DIR / "doclaynet_candidate_metadata.json"
 
 # --- Dataset sources (reused from Typographic — see MEMORY) -----------------
 # Training: FUNSD, CORD, SROIE. Never train on anything else.
