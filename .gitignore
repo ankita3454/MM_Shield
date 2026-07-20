@@ -3,50 +3,22 @@ __pycache__/
 .venv/
 .DS_Store
 
-# Downloaded/generated datasets are large and reproducible from download.py + sampler.py + attack_generator.py — never commit
-datasets/FUNSD/
-datasets/CORD/
-datasets/SROIE/
-datasets/FigStep/
-datasets/DocLayNet/
-
-# sampled_images.json, doclaynet_sampled_images.json, and attack_metadata.json
-# ARE committed (frozen, small, define the reproducible sample).
-#
-# datasets/attacks/ and datasets/doclaynet_attacks/ (the generated attacked
-# images themselves) were committed for a while despite being generated
-# output, specifically because attack_generator.py's font rendering is
-# macOS-path-dependent - regenerating on another OS doesn't reproduce them
-# byte-for-byte. Repo-cleanup decision (2026-07-20): un-tracked anyway, to
-# keep the repo lightweight per standard ML-repo practice. Tradeoff this
-# accepts: a fresh clone regenerates *visually equivalent* attacked images
-# from the same committed attack_metadata.json + fixed seed, but not
-# pixel-identical ones on a different machine/font set. Exact reproduction
-# of previously reported numbers to the pixel is not guaranteed cross-
-# machine as a result - re-running the pipeline is still fully functional.
-datasets/attacks/
-datasets/doclaynet_attacks/
+# The entire datasets/ directory is excluded from git (2026-07-20, second
+# cleanup pass) - previously a handful of small metadata files (sampled_
+# images.json, attack_metadata.json, and their DocLayNet/adversarial
+# variants) were kept tracked deliberately, since they define exactly which
+# images were sampled and which random attack parameters were chosen,
+# letting a fresh clone reproduce the same experiment exactly. Excluding
+# them too was an explicit user decision to keep GitHub minimal - the
+# tradeoff: a fresh clone can still run the full download -> sample ->
+# attack-generate pipeline and get a statistically equivalent dataset (same
+# RANDOM_SEED, same HF dataset revision), but not a byte-identical one,
+# since the frozen sample/attack choices themselves are no longer version-
+# controlled. All of it remains present on disk locally, untouched.
+datasets/
 
 typographic/outputs/
 *.pkl
 *.egg-info/
 
-# Adversarial module: unlike Typographic, attack_generator.py here uses only
-# procedural drawing (no system fonts), so patched images and candidate crops
-# ARE perfectly reproducible cross-platform from committed code + committed
-# clean images + fixed seed — no font-portability exception needed.
-# adversarial/attack_metadata.json IS committed (frozen, small, defines the
-# reproducible random choices), same reasoning as typographic's.
-datasets/adversarial/attacks/
-datasets/adversarial/candidates/
-datasets/adversarial/candidate_labels.csv
-datasets/adversarial/candidate_metadata.json
 adversarial/outputs/
-
-# Phase 5: same reasoning applies to the DocLayNet benchmark run -
-# doclaynet_attack_metadata.json is committed (frozen, small, reproducible
-# random choices); the generated images/crops/labels are not.
-datasets/adversarial/doclaynet_attacks/
-datasets/adversarial/doclaynet_candidates/
-datasets/adversarial/doclaynet_candidate_labels.csv
-datasets/adversarial/doclaynet_candidate_metadata.json
