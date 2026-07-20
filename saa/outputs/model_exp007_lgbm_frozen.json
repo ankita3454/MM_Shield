@@ -1,0 +1,142 @@
+{
+  "classifier_name": "lgbm",
+  "feature_names": [
+    "entropy_manual",
+    "noise_mean",
+    "noise_std",
+    "noise_abs_mean",
+    "lsb_ratio",
+    "lsb_entropy",
+    "total_frequency_energy",
+    "high_freq_ratio",
+    "local_variance_mean",
+    "local_variance_std",
+    "local_variance_max",
+    "hist_skewness",
+    "hist_kurtosis",
+    "edge_density",
+    "edge_mean_strength",
+    "chisq_max_pvalue",
+    "chisq_mean_pvalue",
+    "chisq_fraction_high",
+    "srm_diagonal_ratio",
+    "srm_entropy",
+    "srm_energy"
+  ],
+  "test_size": 0.3,
+  "seed": 42,
+  "overall_accuracy": 0.7222222222222222,
+  "per_dataset_accuracy": {
+    "CORD": 0.5217391304347826,
+    "FUNSD": 0.96875,
+    "SROIE": 0.6285714285714286
+  },
+  "confusion_matrix": [
+    [
+      30,
+      15
+    ],
+    [
+      10,
+      35
+    ]
+  ],
+  "precision": {
+    "clean": 0.75,
+    "stego": 0.7
+  },
+  "recall": {
+    "clean": 0.6666666666666666,
+    "stego": 0.7777777777777778
+  },
+  "f1": {
+    "clean": 0.7058823529411765,
+    "stego": 0.7368421052631579
+  },
+  "feature_importance": [
+    [
+      "lsb_entropy",
+      715.0
+    ],
+    [
+      "lsb_ratio",
+      591.0
+    ],
+    [
+      "noise_abs_mean",
+      383.0
+    ],
+    [
+      "srm_entropy",
+      355.0
+    ],
+    [
+      "entropy_manual",
+      347.0
+    ],
+    [
+      "total_frequency_energy",
+      289.0
+    ],
+    [
+      "noise_mean",
+      287.0
+    ],
+    [
+      "hist_skewness",
+      270.0
+    ],
+    [
+      "srm_diagonal_ratio",
+      229.0
+    ],
+    [
+      "noise_std",
+      171.0
+    ],
+    [
+      "high_freq_ratio",
+      130.0
+    ],
+    [
+      "edge_density",
+      125.0
+    ],
+    [
+      "local_variance_max",
+      124.0
+    ],
+    [
+      "chisq_max_pvalue",
+      114.0
+    ],
+    [
+      "edge_mean_strength",
+      113.0
+    ],
+    [
+      "local_variance_std",
+      109.0
+    ],
+    [
+      "hist_kurtosis",
+      85.0
+    ],
+    [
+      "local_variance_mean",
+      74.0
+    ],
+    [
+      "srm_energy",
+      42.0
+    ],
+    [
+      "chisq_mean_pvalue",
+      3.0
+    ],
+    [
+      "chisq_fraction_high",
+      0.0
+    ]
+  ]
+}

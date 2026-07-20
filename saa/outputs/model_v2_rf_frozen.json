@@ -1,0 +1,142 @@
+{
+  "classifier_name": "rf",
+  "feature_names": [
+    "entropy_manual",
+    "noise_mean",
+    "noise_std",
+    "noise_abs_mean",
+    "lsb_ratio",
+    "lsb_entropy",
+    "total_frequency_energy",
+    "high_freq_ratio",
+    "local_variance_mean",
+    "local_variance_std",
+    "local_variance_max",
+    "hist_skewness",
+    "hist_kurtosis",
+    "edge_density",
+    "edge_mean_strength",
+    "chisq_max_pvalue",
+    "chisq_mean_pvalue",
+    "chisq_fraction_high",
+    "srm_diagonal_ratio",
+    "srm_entropy",
+    "srm_energy"
+  ],
+  "test_size": 0.3,
+  "seed": 42,
+  "overall_accuracy": 0.7333333333333333,
+  "per_dataset_accuracy": {
+    "CORD": 0.5652173913043478,
+    "FUNSD": 0.96875,
+    "SROIE": 0.6285714285714286
+  },
+  "confusion_matrix": [
+    [
+      31,
+      14
+    ],
+    [
+      10,
+      35
+    ]
+  ],
+  "precision": {
+    "clean": 0.7560975609756098,
+    "stego": 0.7142857142857143
+  },
+  "recall": {
+    "clean": 0.6888888888888889,
+    "stego": 0.7777777777777778
+  },
+  "f1": {
+    "clean": 0.7209302325581395,
+    "stego": 0.7446808510638298
+  },
+  "feature_importance": [
+    [
+      "lsb_entropy",
+      0.2676637712897653
+    ],
+    [
+      "lsb_ratio",
+      0.1993168402650614
+    ],
+    [
+      "srm_entropy",
+      0.06207396734388794
+    ],
+    [
+      "entropy_manual",
+      0.058350716387245066
+    ],
+    [
+      "noise_std",
+      0.03859117289787391
+    ],
+    [
+      "srm_diagonal_ratio",
+      0.03432884971841559
+    ],
+    [
+      "noise_abs_mean",
+      0.03310954388198734
+    ],
+    [
+      "hist_skewness",
+      0.03155192582781982
+    ],
+    [
+      "local_variance_std",
+      0.030962285478358286
+    ],
+    [
+      "srm_energy",
+      0.030454410920701464
+    ],
+    [
+      "noise_mean",
+      0.029496072591036256
+    ],
+    [
+      "edge_density",
+      0.026761370368524936
+    ],
+    [
+      "local_variance_mean",
+      0.025715319846059157
+    ],
+    [
+      "total_frequency_energy",
+      0.024875240554780593
+    ],
+    [
+      "local_variance_max",
+      0.024605601002285073
+    ],
+    [
+      "hist_kurtosis",
+      0.024307504701918555
+    ],
+    [
+      "high_freq_ratio",
+      0.024149773982722087
+    ],
+    [
+      "edge_mean_strength",
+      0.019823483979713605
+    ],
+    [
+      "chisq_mean_pvalue",
+      0.008588474878297067
+    ],
+    [
+      "chisq_max_pvalue",
+      0.004879127216321062
+    ],
+    [
+      "chisq_fraction_high",
+      0.0003945468672255633
+    ]
+  ]
+}

@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.DS_Store
+datasets/clean/*
+datasets/stego/*
+datasets/residuals/*
+datasets/clean_bossbase_only/
+datasets/clean_docile_only/
+datasets/stego_bossbase_only/
+datasets/stego_docile_only/
+!datasets/clean/.gitkeep
+!datasets/stego/.gitkeep
+!datasets/residuals/.gitkeep
+
