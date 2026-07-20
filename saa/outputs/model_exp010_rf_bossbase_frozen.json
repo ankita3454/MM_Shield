@@ -1,0 +1,140 @@
+{
+  "classifier_name": "rf",
+  "feature_names": [
+    "entropy_manual",
+    "noise_mean",
+    "noise_std",
+    "noise_abs_mean",
+    "lsb_ratio",
+    "lsb_entropy",
+    "total_frequency_energy",
+    "high_freq_ratio",
+    "local_variance_mean",
+    "local_variance_std",
+    "local_variance_max",
+    "hist_skewness",
+    "hist_kurtosis",
+    "edge_density",
+    "edge_mean_strength",
+    "chisq_max_pvalue",
+    "chisq_mean_pvalue",
+    "chisq_fraction_high",
+    "srm_diagonal_ratio",
+    "srm_entropy",
+    "srm_energy"
+  ],
+  "test_size": 0.3,
+  "seed": 42,
+  "overall_accuracy": 0.08333333333333333,
+  "per_dataset_accuracy": {
+    "BOSSBASE": 0.08333333333333333
+  },
+  "confusion_matrix": [
+    [
+      1,
+      29
+    ],
+    [
+      26,
+      4
+    ]
+  ],
+  "precision": {
+    "clean": 0.037037037037037035,
+    "stego": 0.12121212121212122
+  },
+  "recall": {
+    "clean": 0.03333333333333333,
+    "stego": 0.13333333333333333
+  },
+  "f1": {
+    "clean": 0.03508771929824561,
+    "stego": 0.12698412698412698
+  },
+  "feature_importance": [
+    [
+      "srm_diagonal_ratio",
+      0.06641247094255087
+    ],
+    [
+      "chisq_mean_pvalue",
+      0.06229622995321589
+    ],
+    [
+      "lsb_entropy",
+      0.06217011579478313
+    ],
+    [
+      "srm_entropy",
+      0.05768142832026746
+    ],
+    [
+      "hist_skewness",
+      0.05371078147270203
+    ],
+    [
+      "lsb_ratio",
+      0.05147412867588875
+    ],
+    [
+      "local_variance_max",
+      0.051253265949491617
+    ],
+    [
+      "noise_mean",
+      0.050385445139739
+    ],
+    [
+      "total_frequency_energy",
+      0.050154407213562485
+    ],
+    [
+      "noise_abs_mean",
+      0.050025923060045566
+    ],
+    [
+      "high_freq_ratio",
+      0.050017562515756495
+    ],
+    [
+      "noise_std",
+      0.045566547195054395
+    ],
+    [
+      "hist_kurtosis",
+      0.04404321257033392
+    ],
+    [
+      "local_variance_std",
+      0.04323644273135882
+    ],
+    [
+      "entropy_manual",
+      0.04315123861154678
+    ],
+    [
+      "chisq_max_pvalue",
+      0.0428187119901352
+    ],
+    [
+      "edge_mean_strength",
+      0.04064585081633826
+    ],
+    [
+      "srm_energy",
+      0.03923716888098852
+    ],
+    [
+      "edge_density",
+      0.035936974540832646
+    ],
+    [
+      "local_variance_mean",
+      0.03533097481432376
+    ],
+    [
+      "chisq_fraction_high",
+      0.02445111881108437
+    ]
+  ]
+}
