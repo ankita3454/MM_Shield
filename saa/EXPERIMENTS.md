@@ -98,7 +98,7 @@ Chi-square features (`chisq_max_pvalue`, `chisq_mean_pvalue`, `chisq_fraction_hi
 
 **Reproduce this exact run**:
 ```
-cd src
+cd saa/src
 python3 validate.py --clean-dir ../datasets/clean --stego-dir ../datasets/stego \
   --out-csv ../outputs/features.csv --classifier rf \
   --save-model ../outputs/model_v2_rf_frozen.pkl
@@ -702,7 +702,7 @@ Next hypothesis: Two directions now compete for priority: (1) repeat the
 
 **Reproduce this exact run**:
 ```
-cd src
+cd saa/src
 python3 download_datasets.py --skip 50 --n 50          # img_050-099, all 3 datasets
 python3 embed_lsb_scattered.py                          # resumable, only embeds the new 150
 python3 validate.py --clean-dir ../datasets/clean --stego-dir ../datasets/stego \
@@ -843,7 +843,7 @@ This is worth stating precisely rather than glossing: **every individual feature
 
 **Reproduce this exact run**:
 ```
-cd src
+cd saa/src
 python3 download_datasets.py --only BOSSBASE --n 100 --random --seed 42
 python3 embed_lsb_scattered.py --only BOSSBASE
 python3 validate.py --clean-dir ../datasets/clean_bossbase_only --stego-dir ../datasets/stego_bossbase_only \
@@ -958,7 +958,7 @@ Next hypothesis: The duplicate-row caveat has now been checked the same
 
 **Reproduce this exact run**:
 ```
-cd src
+cd saa/src
 python3 download_datasets.py --only DOCILE --n 100 --random --seed 42 --buffer-size 200
 python3 embed_lsb_scattered.py --only DOCILE
 python3 validate.py --clean-dir ../datasets/clean_docile_only --stego-dir ../datasets/stego_docile_only \
