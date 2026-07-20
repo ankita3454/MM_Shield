@@ -11,10 +11,21 @@ datasets/FigStep/
 datasets/DocLayNet/
 
 # sampled_images.json, doclaynet_sampled_images.json, and attack_metadata.json
-# ARE committed (frozen, small, define the reproducible sample). datasets/attacks/
-# and datasets/doclaynet_attacks/ ARE ALSO committed, unlike the raw datasets
-# above — attack_generator.py's font rendering is macOS-path-dependent, so
-# those images are NOT perfectly reproducible on another machine.
+# ARE committed (frozen, small, define the reproducible sample).
+#
+# datasets/attacks/ and datasets/doclaynet_attacks/ (the generated attacked
+# images themselves) were committed for a while despite being generated
+# output, specifically because attack_generator.py's font rendering is
+# macOS-path-dependent - regenerating on another OS doesn't reproduce them
+# byte-for-byte. Repo-cleanup decision (2026-07-20): un-tracked anyway, to
+# keep the repo lightweight per standard ML-repo practice. Tradeoff this
+# accepts: a fresh clone regenerates *visually equivalent* attacked images
+# from the same committed attack_metadata.json + fixed seed, but not
+# pixel-identical ones on a different machine/font set. Exact reproduction
+# of previously reported numbers to the pixel is not guaranteed cross-
+# machine as a result - re-running the pipeline is still fully functional.
+datasets/attacks/
+datasets/doclaynet_attacks/
 
 typographic/outputs/
 *.pkl
