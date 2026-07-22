@@ -1,0 +1,6 @@
+run,config,typo_f1,patch_f1,stego_f1,exact_match,note
+1,"weak stego attack (136-bit localized payload), wd=1e-4",0.68,0.88,0.66,0.27,"stego F1 inflated -- base-rate guessing, no real signal"
+2,"fixed stego attack (15% scattered LSB), wd=1e-4",0.61,0.86,0.64,0.28,
+3,"fixed stego, + regularization (patch width 128, added dropout), wd=1e-3",0.59,0.82,0.56,0.26,"over-regularized, underfit"
+4,"fixed stego, + regularization, wd=3e-4",0.65,0.875,0.54,0.29,best optimization-only config
+5,"wd=3e-4, SAA branch widened (3-layer) + dropout 0.05 (FROZEN, final model)",0.69,0.868,0.62,0.31,single-variable SAA-branch ablation

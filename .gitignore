@@ -22,3 +22,13 @@ typographic/outputs/
 *.egg-info/
 
 adversarial/outputs/
+
+# AATFN fusion module: base_images/ (clean source pages) and generated/
+# (the 2400-image, 8-attack-combination corpus) are large and fully
+# reproducible from scripts/sample_dataset.py + scripts/generate_dataset.py
+# with the frozen seed — never commit. features.csv, the frozen model
+# weights (model/), results/, and paper_assets/ ARE committed since they're
+# small and are exactly what the paper's numbers/figures were built from.
+aatfn/base_images/
+aatfn/generated/
+aatfn/raw_datasets/

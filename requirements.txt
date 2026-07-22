@@ -5,9 +5,13 @@ numpy
 paddleocr
 paddlepaddle
 sentence-transformers
-opencv-python
+opencv-contrib-python
 pandas
 scikit-learn
 xgboost
 torch
 torchvision
+scipy
+scikit-image
+joblib
+matplotlib
